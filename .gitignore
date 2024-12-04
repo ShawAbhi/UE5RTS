@@ -17,3 +17,7 @@
 
 # Visual Studio
 .vs
+
+# Ignoring back the files not required
+/Plugins/**/Intermediate/**
+/Plugins/**/Binaries/**
