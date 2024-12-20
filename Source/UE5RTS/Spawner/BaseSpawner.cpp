@@ -65,16 +65,43 @@ void ABaseSpawner::SnapToGrid(UObject* TargetObject, float ZOffset)
 
 FVector ABaseSpawner::SnapLocationToGrid(const FVector& Location, const FVector& BoundsExtent, float ZOffset)
 {
+	// Ensure the grid step is not zero to avoid division errors
+	if (GridStep <= 0.0f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GridStep must be greater than 0. Returning original location."));
+		return Location;
+	}
+
 	// Calculate the snapped position in world space
 	FVector SnappedLocation;
-	SnappedLocation.X = FMath::RoundToInt(Location.X / 100.0f) * 100.0f;
-	SnappedLocation.Y = FMath::RoundToInt(Location.Y / 100.0f) * 100.0f;
-	SnappedLocation.Z = FMath::RoundToInt(Location.Z / 100.0f) * 100.0f + ZOffset;
+	SnappedLocation.X = FMath::RoundToInt(Location.X / GridStep) * GridStep;
+	SnappedLocation.Y = FMath::RoundToInt(Location.Y / GridStep) * GridStep;
+	//SnappedLocation.Z = FMath::RoundToInt(Location.Z / GridStep) * GridStep + ZOffset;
+	SnappedLocation.Z = ZOffset;
 
 	// Adjust for the target's size to align its edges with the grid cells
-	SnappedLocation.X -= FMath::Fmod(BoundsExtent.X, 100.0f);
-	SnappedLocation.Y -= FMath::Fmod(BoundsExtent.Y, 100.0f);
-	SnappedLocation.Z -= FMath::Fmod(BoundsExtent.Z, 100.0f);
+	SnappedLocation.X -= FMath::Fmod(BoundsExtent.X, GridStep);
+	SnappedLocation.Y -= FMath::Fmod(BoundsExtent.Y, GridStep);
+	SnappedLocation.Z -= FMath::Fmod(BoundsExtent.Z, GridStep);
 
 	return SnappedLocation;
+}
+
+
+FVector ABaseSpawner::SnapScaleToGrid(const FVector& Scale)
+{
+	// Ensure the grid step is not zero to avoid division errors
+	if (GridStep <= 0.0f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GridStep must be greater than 0. Returning original scale."));
+		return Scale;
+	}
+
+	// Calculate the snapped scale by rounding each component to the nearest grid step
+	FVector SnappedScale;
+	SnappedScale.X = FMath::RoundToInt(Scale.X / GridStep) * GridStep;
+	SnappedScale.Y = FMath::RoundToInt(Scale.Y / GridStep) * GridStep;
+	SnappedScale.Z = FMath::RoundToInt(Scale.Z / GridStep) * GridStep;
+
+	return SnappedScale;
 }

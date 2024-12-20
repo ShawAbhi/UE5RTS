@@ -12,9 +12,16 @@ class UE5RTS_API ABaseSpawner : public AActor
 	GENERATED_BODY()
 
 protected:
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Grid")
+	float GridStep{100.0f};
+	
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
 	static void SnapToGrid(UObject* TargetObject, float ZOffset = 0.0f);
 
+	UFUNCTION(BlueprintPure, Category = "Spawner")
+	FVector SnapScaleToGrid(const FVector& Scale);
+	
 	UFUNCTION(BlueprintPure, Category = "Spawner")
 	FVector SnapLocationToGrid(const FVector& Location, const FVector& BoundsExtent, float ZOffset = 0.0f);
 
