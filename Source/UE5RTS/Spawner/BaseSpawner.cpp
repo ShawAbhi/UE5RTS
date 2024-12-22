@@ -3,6 +3,8 @@
 
 #include "BaseSpawner.h"
 
+#include "Kismet/GameplayStatics.h"
+
 
 ABaseSpawner::ABaseSpawner()
 {
@@ -74,15 +76,34 @@ FVector ABaseSpawner::SnapLocationToGrid(const FVector& Location, const FVector&
 
 	// Calculate the snapped position in world space
 	FVector SnappedLocation;
-	SnappedLocation.X = FMath::RoundToInt(Location.X / GridStep) * GridStep;
-	SnappedLocation.Y = FMath::RoundToInt(Location.Y / GridStep) * GridStep;
-	//SnappedLocation.Z = FMath::RoundToInt(Location.Z / GridStep) * GridStep + ZOffset;
-	SnappedLocation.Z = ZOffset;
 
-	// Adjust for the target's size to align its edges with the grid cells
-	SnappedLocation.X -= FMath::Fmod(BoundsExtent.X, GridStep);
-	SnappedLocation.Y -= FMath::Fmod(BoundsExtent.Y, GridStep);
-	SnappedLocation.Z -= FMath::Fmod(BoundsExtent.Z, GridStep);
+	// Helper lambda to calculate the snapping logic
+	auto SnapToGrid = [](float Value, float GridStep, float BoundsExtent) -> float {
+		// Determine the offset based on BoundsExtent being a multiple of 50
+		float Offset = FMath::RoundToFloat(BoundsExtent / 50.0f) * 50.0f;
+
+		// Snap to the nearest grid step with the calculated offset
+		float SnappedValue = FMath::RoundToFloat((Value - Offset) / GridStep) * GridStep + Offset;
+
+		// Adjust snapping if necessary
+		if (SnappedValue > Value + GridStep / 2.0f)
+		{
+			SnappedValue -= GridStep;
+		}
+		else if (Value - SnappedValue >= GridStep / 2.0f)
+		{
+			SnappedValue += GridStep;
+		}
+
+		return SnappedValue;
+	};
+
+	// Apply snapping logic for X and Y
+	SnappedLocation.X = SnapToGrid(Location.X, GridStep, BoundsExtent.X);
+	SnappedLocation.Y = SnapToGrid(Location.Y, GridStep, BoundsExtent.Y);
+
+	// Set Z to the specified offset
+	SnappedLocation.Z = ZOffset;
 
 	return SnappedLocation;
 }
@@ -104,4 +125,26 @@ FVector ABaseSpawner::SnapScaleToGrid(const FVector& Scale)
 	SnappedScale.Z = FMath::RoundToInt(Scale.Z / GridStep) * GridStep;
 
 	return SnappedScale;
+}
+
+FVector ABaseSpawner::GetTouchToZWorld(const FVector2D& ScreenPosition, float TargetZHeight)
+{
+	FVector WorldLocation;
+	FVector WorldDirection;
+
+	UGameplayStatics::GetPlayerController(this, 0)->DeprojectScreenPositionToWorld(
+		ScreenPosition.X, ScreenPosition.Y, WorldLocation, WorldDirection);
+
+	// Ensure the direction is not zero to avoid division by zero
+	if (WorldDirection.IsZero() || FMath::IsNearlyZero(WorldDirection.Z))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Direction vector must not be zero. Returning StartLocation."));
+		return WorldLocation;
+	}
+
+	// Calculate the difference in Z between the target height and the start location
+	float ZDifference = TargetZHeight - WorldLocation.Z;
+
+	// Compute the projected position
+	return WorldLocation + WorldDirection * ZDifference / WorldDirection.Z;
 }

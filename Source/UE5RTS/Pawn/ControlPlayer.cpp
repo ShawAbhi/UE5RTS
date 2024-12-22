@@ -9,4 +9,11 @@ AControlPlayer::AControlPlayer()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AControlPlayer::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+}
+
+
 

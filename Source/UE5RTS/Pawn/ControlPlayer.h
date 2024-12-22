@@ -10,6 +10,9 @@ UCLASS()
 class UE5RTS_API AControlPlayer : public ACharacter
 {
 	GENERATED_BODY()
+	
+protected:
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	AControlPlayer();

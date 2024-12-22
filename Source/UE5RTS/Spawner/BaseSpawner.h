@@ -25,6 +25,9 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "Spawner")
 	FVector SnapLocationToGrid(const FVector& Location, const FVector& BoundsExtent, float ZOffset = 0.0f);
 
+	UFUNCTION(BlueprintPure, Category = "Spawner")
+	FVector GetTouchToZWorld(const FVector2D& ScreenPosition, float TargetZHeight = 0.0f);
+
 public:
 	ABaseSpawner();
 };
