@@ -28,6 +28,9 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "Spawner")
 	FVector GetTouchToZWorld(const FVector2D& ScreenPosition, float TargetZHeight = 0.0f);
 
+	UFUNCTION(BlueprintPure, Category = "Spawner")
+	void GetOppositeDirectionVector(const FHitResult& HitResult, FVector& DirectionVector);
+
 public:
 	ABaseSpawner();
 };

@@ -148,3 +148,8 @@ FVector ABaseSpawner::GetTouchToZWorld(const FVector2D& ScreenPosition, float Ta
 	// Compute the projected position
 	return WorldLocation + WorldDirection * ZDifference / WorldDirection.Z;
 }
+
+void ABaseSpawner::GetOppositeDirectionVector(const FHitResult& HitResult, FVector& DirectionVector)
+{
+	HitResult.GetActor()->GetActorForwardVector().RotateAngleAxis(180, FVector::UpVector);
+}
