@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InstancedStruct.h"
 #include "GameFramework/Actor.h"
 #include "BaseSpawner.generated.h"
 
@@ -33,4 +34,14 @@ protected:
 
 public:
 	ABaseSpawner();
+	UFUNCTION(BlueprintCallable, Category = "JSON")
+	static FString InstancedStructToJsonString(const FInstancedStruct& Struct);
+	UFUNCTION(BlueprintCallable, Category = "JSON")
+	static FString InstancedStructArrayToJsonString(const TArray<FInstancedStruct>& Structs);
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
+	static bool JsonStringToInstancedStructArray(
+		const FString& JsonString,
+		TArray<FInstancedStruct>& OutStructs,
+		UScriptStruct* TargetScriptStruct
+	);
 };

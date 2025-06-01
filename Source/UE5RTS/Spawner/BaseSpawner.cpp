@@ -3,6 +3,7 @@
 
 #include "BaseSpawner.h"
 
+#include "JsonObjectConverter.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -152,4 +153,95 @@ FVector ABaseSpawner::GetTouchToZWorld(const FVector2D& ScreenPosition, float Ta
 void ABaseSpawner::GetOppositeDirectionVector(const FHitResult& HitResult, FVector& DirectionVector)
 {
 	HitResult.GetActor()->GetActorForwardVector().RotateAngleAxis(180, FVector::UpVector);
+}
+
+
+FString ABaseSpawner::InstancedStructToJsonString(const FInstancedStruct& Struct)
+{
+	if (!Struct.IsValid())
+	{
+		return TEXT("Error: Struct is not valid.");
+	}
+
+	FString OutputString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(Struct.GetScriptStruct(), Struct.GetMemory(), OutputString, 0, 0))
+	{
+		return OutputString;
+	}
+
+	return TEXT("Error: Failed to serialize Blueprint struct.");
+}
+
+FString ABaseSpawner::InstancedStructArrayToJsonString(const TArray<FInstancedStruct>& Structs)
+{
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+
+	for (const FInstancedStruct& Struct : Structs)
+	{
+		if (!Struct.IsValid())
+		{
+			continue;
+		}
+
+		TSharedRef<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+		if (FJsonObjectConverter::UStructToJsonObject(Struct.GetScriptStruct(), Struct.GetMemory(), JsonObject, 0, 0))
+		{
+			JsonArray.Add(MakeShared<FJsonValueObject>(JsonObject));
+		}
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+
+	if (FJsonSerializer::Serialize(JsonArray, Writer)) // ← FIXED: Use raw array
+	{
+		return OutputString;
+	}
+
+	return TEXT("Error: Failed to serialize Struct array.");
+}
+
+bool ABaseSpawner::JsonStringToInstancedStructArray(
+	const FString& JsonString,
+	TArray<FInstancedStruct>& OutStructs,
+	UScriptStruct* TargetScriptStruct
+)
+{
+	if (!TargetScriptStruct)
+	{
+		UE_LOG(LogTemp, Error, TEXT("TargetScriptStruct is null"));
+		return false;
+	}
+
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
+
+	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON string into array"));
+		return false;
+	}
+
+	for (const TSharedPtr<FJsonValue>& Value : JsonArray)
+	{
+		TSharedPtr<FJsonObject> JsonObjectPtr = Value->AsObject();
+		if (!JsonObjectPtr.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Skipping non-object JSON entry"));
+			continue;
+		}
+
+		FInstancedStruct Instance;
+		Instance.InitializeAs(TargetScriptStruct);
+
+		if (!FJsonObjectConverter::JsonObjectToUStruct(JsonObjectPtr.ToSharedRef(), TargetScriptStruct, Instance.GetMutableMemory(), 0, 0))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to convert JSON entry to struct"));
+			continue;
+		}
+
+		OutStructs.Add(MoveTemp(Instance));
+	}
+
+	return true;
 }
