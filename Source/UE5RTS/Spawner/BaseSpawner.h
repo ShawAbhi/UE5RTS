@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InstancedStruct.h"
 #include "GameFramework/Actor.h"
 #include "BaseSpawner.generated.h"
 
@@ -25,6 +26,22 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "Spawner")
 	FVector SnapLocationToGrid(const FVector& Location, const FVector& BoundsExtent, float ZOffset = 0.0f);
 
+	UFUNCTION(BlueprintPure, Category = "Spawner")
+	FVector GetTouchToZWorld(const FVector2D& ScreenPosition, float TargetZHeight = 0.0f);
+
+	UFUNCTION(BlueprintPure, Category = "Spawner")
+	void GetOppositeDirectionVector(const FHitResult& HitResult, FVector& DirectionVector);
+
 public:
 	ABaseSpawner();
+	UFUNCTION(BlueprintCallable, Category = "JSON")
+	static FString InstancedStructToJsonString(const FInstancedStruct& Struct);
+	UFUNCTION(BlueprintCallable, Category = "JSON")
+	static FString InstancedStructArrayToJsonString(const TArray<FInstancedStruct>& Structs);
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
+	static bool JsonStringToInstancedStructArray(
+		const FString& JsonString,
+		TArray<FInstancedStruct>& OutStructs,
+		UScriptStruct* TargetScriptStruct
+	);
 };
